@@ -17,15 +17,15 @@ export default function BerberCard({ berber }: BerberCardProps) {
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">{berber.businessName}</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{berber.shopName}</h3>
           <p className="mt-1 text-sm text-gray-600 line-clamp-2">{berber.address}</p>
         </div>
         <div className="flex items-center gap-1 bg-blue-50 px-2 py-1 rounded-lg">
           <Star className="w-4 h-4 text-yellow-400 fill-current" />
           <span className="text-sm font-medium text-blue-700">
-            {berber.averageRating.toFixed(1)}
+            {berber.averageRating?.toFixed(1) ?? '0.0'}
           </span>
-          <span className="text-xs text-blue-600">({berber.reviewCount})</span>
+          <span className="text-xs text-blue-600">({berber.reviewCount || 0})</span>
         </div>
       </div>
 

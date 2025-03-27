@@ -2,10 +2,22 @@
 
 import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import BerberCard from '@/components/berber-bul/BerberCard'
 import SearchFilters from '@/components/berber-bul/SearchFilters'
-import BerberMap from '@/components/berber-bul/BerberMap'
 import { Barber } from '@prisma/client'
+
+const BerberMap = dynamic(() => import('@/components/berber-bul/BerberMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-xl">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
+        <p className="mt-2 text-sm text-gray-600">Harita yükleniyor...</p>
+      </div>
+    </div>
+  ),
+})
 
 interface BerberWithRating extends Barber {
   averageRating: number
