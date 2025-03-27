@@ -17,7 +17,7 @@ const LocationPicker = dynamic(() => import('@/components/berber/LocationPicker'
 
 interface BarberProfile {
   shopName: string
-  description: string
+  description?: string
   phone: string
   address: string
   city: string
@@ -43,8 +43,7 @@ interface BarberProfile {
 export default function BarberProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
-  const [profile, setProfile] = useState<BarberProfile | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const {
@@ -71,7 +70,6 @@ export default function BarberProfilePage() {
       const response = await fetch('/api/berber/profil')
       if (response.ok) {
         const data = await response.json()
-        setProfile(data)
         reset(data)
       }
     } catch (error) {

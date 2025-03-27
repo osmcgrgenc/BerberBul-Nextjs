@@ -65,6 +65,7 @@ model Service {
   name        String
   duration    Int       // Dakika cinsinden
   price       Float
+  appointments Appointment[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -76,6 +77,7 @@ model Appointment {
   customerId  String
   customer    Customer  @relation(fields: [customerId], references: [id])
   serviceId   String
+  service     Service   @relation(fields: [serviceId], references: [id])
   startTime   DateTime
   endTime     DateTime
   status      AppointmentStatus @default(PENDING)

@@ -2,6 +2,26 @@ import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcrypt'
 import prisma from './prisma'
+import { Role } from '@prisma/client'
+
+declare module 'next-auth' {
+  interface User {
+    id: string
+    email: string
+    role: Role
+  }
+
+  interface Session {
+    user: User
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string
+    role: Role
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
