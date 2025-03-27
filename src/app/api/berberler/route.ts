@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
     const rating = searchParams.get('rating')
 
     // Filtreleme koşullarını oluştur
-    const where: any = {}
+    const where: Prisma.BarberWhereInput = {}
 
     if (city) {
       where.city = {
@@ -38,11 +39,6 @@ export async function GET(request: NextRequest) {
         neighborhood: true,
         latitude: true,
         longitude: true,
-        _count: {
-          select: {
-            reviews: true,
-          },
-        },
         reviews: {
           select: {
             rating: true,
@@ -62,11 +58,10 @@ export async function GET(request: NextRequest) {
           ? totalRating / barber.reviews.length
           : null
 
+      const { reviews, ...rest } = barber
       return {
-        ...barber,
+        ...rest,
         rating: averageRating,
-        reviews: undefined,
-        _count: undefined,
       }
     })
 

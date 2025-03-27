@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -23,14 +23,37 @@ interface BerberMapProps {
 
 const BerberMap = ({ barbers }: BerberMapProps) => {
   const mapRef = useRef<L.Map | null>(null)
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!mapRef.current) {
-      // İstanbul'un merkezi
-      const center = { lat: 41.0082, lng: 28.9784 }
+    // Kullanıcının konumunu al
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          })
+        },
+        (error) => {
+          console.error('Konum alınamadı:', error)
+          setLocationError('Konumunuz alınamadı')
+          // İstanbul merkezi varsayılan konum olarak kullanılacak
+          setUserLocation({ lat: 41.0082, lng: 28.9784 })
+        }
+      )
+    } else {
+      setLocationError('Tarayıcınız konum özelliğini desteklemiyor')
+      // İstanbul merkezi varsayılan konum olarak kullanılacak
+      setUserLocation({ lat: 41.0082, lng: 28.9784 })
+    }
+  }, [])
 
+  useEffect(() => {
+    if (!mapRef.current && userLocation) {
       // Haritayı başlat
-      const map = L.map('map').setView([center.lat, center.lng], 11)
+      const map = L.map('map').setView([userLocation.lat, userLocation.lng], 13)
       mapRef.current = map
 
       // OpenStreetMap katmanını ekle
@@ -49,6 +72,20 @@ const BerberMap = ({ barbers }: BerberMapProps) => {
         popupAnchor: [1, -34],
         shadowSize: [41, 41],
       })
+
+      // Kullanıcı konumunu ekle
+      const userIcon = L.icon({
+        iconUrl: '/user-marker.png', // Bu ikonu oluşturacağız
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+      })
+
+      L.marker([userLocation.lat, userLocation.lng], {
+        icon: userIcon,
+      })
+        .addTo(map)
+        .bindPopup('Konumunuz')
+        .openPopup()
 
       // Berberleri haritaya ekle
       barbers.forEach((barber) => {
@@ -88,7 +125,15 @@ const BerberMap = ({ barbers }: BerberMapProps) => {
         mapRef.current = null
       }
     }
-  }, [barbers])
+  }, [barbers, userLocation])
+
+  if (locationError) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded">
+        {locationError}
+      </div>
+    )
+  }
 
   return <div id="map" className="h-full w-full" />
 }
