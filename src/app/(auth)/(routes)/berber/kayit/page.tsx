@@ -3,23 +3,25 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import AuthCard from '@/components/auth/AuthCard'
+import FormInput from '@/components/auth/FormInput'
+import SubmitButton from '@/components/auth/SubmitButton'
 
 interface RegisterForm {
   name: string
   email: string
   password: string
-  shopName: string
   phone: string
+  businessName: string
   address: string
-  city: string
-  district: string
-  neighborhood: string
 }
 
-export default function BarberRegister() {
+export default function BarberRegisterPage() {
   const router = useRouter()
+  const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  
+
   const {
     register,
     handleSubmit,
@@ -29,7 +31,8 @@ export default function BarberRegister() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       setIsLoading(true)
-      // TODO: API entegrasyonu yapılacak
+      setError(null)
+
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -41,208 +44,149 @@ export default function BarberRegister() {
         }),
       })
 
-      if (response.ok) {
-        router.push('/berber/giris')
-      } else {
-        throw new Error('Kayıt işlemi başarısız oldu')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Kayıt işlemi başarısız oldu')
       }
+
+      router.push('/berber/giris')
     } catch (error) {
-      console.error('Kayıt hatası:', error)
+      setError(error instanceof Error ? error.message : 'Bir hata oluştu')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Berber Hesabı Oluştur
-        </h2>
+    <AuthCard
+      title="Berber Hesabı Oluştur"
+      subtitle={
+        <>
+          Zaten hesabınız var mı?{' '}
+          <Link
+            href="/berber/giris"
+            className="font-semibold text-blue-600 hover:text-blue-500"
+          >
+            Giriş yapın
+          </Link>
+        </>
+      }
+    >
+      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">
+          🎉 Ücretsiz Başlayın!
+        </h3>
+        <p className="text-sm text-blue-700">
+          Hemen ücretsiz kayıt olun ve işletmenizi dijitalleştirmeye başlayın. Premium özellikler için daha sonra abonelik planlarımızı inceleyebilirsiniz.
+        </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Ad Soyad
-              </label>
-              <div className="mt-1">
-                <input
-                  id="name"
-                  type="text"
-                  {...register('name', { required: 'Ad Soyad gereklidir' })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.name && (
-                  <p className="mt-2 text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="shopName" className="block text-sm font-medium text-gray-700">
-                İşletme Adı
-              </label>
-              <div className="mt-1">
-                <input
-                  id="shopName"
-                  type="text"
-                  {...register('shopName', { required: 'İşletme adı gereklidir' })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.shopName && (
-                  <p className="mt-2 text-sm text-red-600">{errors.shopName.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                E-posta
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  type="email"
-                  {...register('email', {
-                    required: 'E-posta gereklidir',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Geçersiz e-posta adresi',
-                    },
-                  })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.email && (
-                  <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Şifre
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  type="password"
-                  {...register('password', {
-                    required: 'Şifre gereklidir',
-                    minLength: {
-                      value: 6,
-                      message: 'Şifre en az 6 karakter olmalıdır',
-                    },
-                  })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.password && (
-                  <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                Telefon
-              </label>
-              <div className="mt-1">
-                <input
-                  id="phone"
-                  type="tel"
-                  {...register('phone', { required: 'Telefon numarası gereklidir' })}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.phone && (
-                  <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                Adres
-              </label>
-              <div className="mt-1">
-                <textarea
-                  id="address"
-                  {...register('address', { required: 'Adres gereklidir' })}
-                  rows={3}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-                {errors.address && (
-                  <p className="mt-2 text-sm text-red-600">{errors.address.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-              <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-                  İl
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="city"
-                    type="text"
-                    {...register('city', { required: 'İl gereklidir' })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {errors.city && (
-                    <p className="mt-2 text-sm text-red-600">{errors.city.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="district" className="block text-sm font-medium text-gray-700">
-                  İlçe
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="district"
-                    type="text"
-                    {...register('district', { required: 'İlçe gereklidir' })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {errors.district && (
-                    <p className="mt-2 text-sm text-red-600">{errors.district.message}</p>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="neighborhood" className="block text-sm font-medium text-gray-700">
-                  Mahalle
-                </label>
-                <div className="mt-1">
-                  <input
-                    id="neighborhood"
-                    type="text"
-                    {...register('neighborhood', { required: 'Mahalle gereklidir' })}
-                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  />
-                  {errors.neighborhood && (
-                    <p className="mt-2 text-sm text-red-600">{errors.neighborhood.message}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {isLoading ? 'Kaydediliyor...' : 'Kayıt Ol'}
-              </button>
-            </div>
-          </form>
+      <div className="mb-6 grid grid-cols-2 gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Ücretsiz Profil</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Konum Bilgisi</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Temel Hizmetler</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>7/24 Destek</span>
         </div>
       </div>
-    </div>
+
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <FormInput
+            id="name"
+            label="Ad Soyad"
+            type="text"
+            register={register}
+            error={errors.name?.message}
+            autoComplete="name"
+            placeholder="Adınız Soyadınız"
+          />
+
+          <FormInput
+            id="businessName"
+            label="İşletme Adı"
+            type="text"
+            register={register}
+            error={errors.businessName?.message}
+            placeholder="İşletmenizin Adı"
+          />
+        </div>
+
+        <FormInput
+          id="email"
+          label="E-posta"
+          type="email"
+          register={register}
+          error={errors.email?.message}
+          autoComplete="email"
+          placeholder="ornek@email.com"
+        />
+
+        <FormInput
+          id="password"
+          label="Şifre"
+          type="password"
+          register={register}
+          error={errors.password?.message}
+          autoComplete="new-password"
+          placeholder="••••••••"
+        />
+
+        <FormInput
+          id="phone"
+          label="Telefon"
+          type="tel"
+          register={register}
+          error={errors.phone?.message}
+          autoComplete="tel"
+          placeholder="05XX XXX XX XX"
+        />
+
+        <FormInput
+          id="address"
+          label="Adres"
+          type="text"
+          register={register}
+          error={errors.address?.message}
+          placeholder="İşletmenizin açık adresi"
+        />
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
+          <p className="font-medium mb-1">Premium Özellikler için Abonelik Gereklidir:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Online Randevu Alma</li>
+            <li>Müşteri Yönetimi</li>
+            <li>Detaylı İstatistikler</li>
+            <li>Özel Promosyonlar</li>
+          </ul>
+        </div>
+
+        <SubmitButton label="Ücretsiz Hesap Oluştur" isLoading={isLoading} />
+      </form>
+    </AuthCard>
   )
 } 
