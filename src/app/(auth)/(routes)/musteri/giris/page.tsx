@@ -1,9 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import AuthCard from '@/components/auth/AuthCard'
+import FormInput from '@/components/auth/FormInput'
+import SubmitButton from '@/components/auth/SubmitButton'
+
+interface LoginForm {
+  email: string
+  password: string
+}
 
 export default function CustomerLoginPage() {
   const router = useRouter()
@@ -12,19 +21,20 @@ export default function CustomerLoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError(null)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>()
 
-    const formData = new FormData(e.currentTarget)
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
+  const onSubmit = async (data: LoginForm) => {
     try {
+      setIsLoading(true)
+      setError(null)
+
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: data.email,
+        password: data.password,
         role: 'CUSTOMER',
         redirect: false,
       })
@@ -43,72 +53,49 @@ export default function CustomerLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Müşteri Girişi
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+    <AuthCard
+      title="Müşteri Girişi"
+      subtitle={
+        <>
           Hesabınız yok mu?{' '}
-          <Link href="/musteri/kayit" className="text-blue-600 hover:text-blue-500">
+          <Link
+            href="/musteri/kayit"
+            className="font-semibold text-blue-600 hover:text-blue-500"
+          >
             Hemen kaydolun
           </Link>
-        </p>
-      </div>
+        </>
+      }
+    >
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl">
+            {error}
+          </div>
+        )}
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
+        <FormInput
+          id="email"
+          label="E-posta"
+          type="email"
+          register={register}
+          error={errors.email?.message}
+          autoComplete="email"
+          placeholder="ornek@email.com"
+        />
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                E-posta
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
+        <FormInput
+          id="password"
+          label="Şifre"
+          type="password"
+          register={register}
+          error={errors.password?.message}
+          autoComplete="current-password"
+          placeholder="••••••••"
+        />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Şifre
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+        <SubmitButton label="Giriş Yap" isLoading={isLoading} />
+      </form>
+    </AuthCard>
   )
 } 
