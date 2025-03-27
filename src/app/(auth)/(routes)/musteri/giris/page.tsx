@@ -8,7 +8,7 @@ import Link from 'next/link'
 export default function CustomerLoginPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || '/'
+  const callbackUrl = searchParams.get('callbackUrl') || '/berber-bul'
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -25,6 +25,7 @@ export default function CustomerLoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
+        role: 'CUSTOMER',
         redirect: false,
       })
 
@@ -34,7 +35,7 @@ export default function CustomerLoginPage() {
       }
 
       router.push(callbackUrl)
-    } catch (error) {
+    } catch {
       setError('Bir hata oluştu')
     } finally {
       setIsLoading(false)
