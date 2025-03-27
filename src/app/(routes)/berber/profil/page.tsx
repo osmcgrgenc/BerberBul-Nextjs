@@ -4,6 +4,16 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import dynamic from 'next/dynamic'
+
+const LocationPicker = dynamic(() => import('@/components/berber/LocationPicker'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] w-full bg-gray-100 rounded-lg flex items-center justify-center">
+      Harita yükleniyor...
+    </div>
+  ),
+})
 
 interface BarberProfile {
   shopName: string
@@ -13,6 +23,8 @@ interface BarberProfile {
   city: string
   district: string
   neighborhood: string
+  latitude: number
+  longitude: number
   services: {
     id: string
     name: string
@@ -33,10 +45,13 @@ export default function BarberProfilePage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [profile, setProfile] = useState<BarberProfile | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
     reset,
   } = useForm<BarberProfile>()
@@ -61,6 +76,7 @@ export default function BarberProfilePage() {
       }
     } catch (error) {
       console.error('Profil yüklenirken hata:', error)
+      setError('Profil bilgileri yüklenirken bir hata oluştu')
     } finally {
       setIsLoading(false)
     }
@@ -69,6 +85,8 @@ export default function BarberProfilePage() {
   const onSubmit = async (data: BarberProfile) => {
     try {
       setIsLoading(true)
+      setError(null)
+
       const response = await fetch('/api/berber/profil', {
         method: 'PUT',
         headers: {
@@ -77,15 +95,27 @@ export default function BarberProfilePage() {
         body: JSON.stringify(data),
       })
 
-      if (response.ok) {
-        // Profil başarıyla güncellendi
-        fetchBarberProfile()
+      if (!response.ok) {
+        throw new Error('Profil güncellenirken bir hata oluştu')
       }
+
+      fetchBarberProfile()
     } catch (error) {
       console.error('Profil güncellenirken hata:', error)
+      setError('Profil güncellenirken bir hata oluştu')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleLocationSelect = (location: { lat: number; lng: number }) => {
+    setValue('latitude', location.lat)
+    setValue('longitude', location.lng)
+  }
+
+  const currentLocation = {
+    lat: watch('latitude') || 41.0082,
+    lng: watch('longitude') || 28.9784,
   }
 
   if (status === 'loading' || isLoading) {
@@ -114,6 +144,12 @@ export default function BarberProfilePage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="shadow sm:rounded-md sm:overflow-hidden">
               <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+                    {error}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     İşletme Adı
@@ -167,7 +203,7 @@ export default function BarberProfilePage() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       İl
@@ -192,7 +228,9 @@ export default function BarberProfilePage() {
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                     {errors.district && (
-                      <p className="mt-1 text-sm text-red-600">{errors.district.message}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.district.message}
+                      </p>
                     )}
                   </div>
 
@@ -206,9 +244,21 @@ export default function BarberProfilePage() {
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     />
                     {errors.neighborhood && (
-                      <p className="mt-1 text-sm text-red-600">{errors.neighborhood.message}</p>
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.neighborhood.message}
+                      </p>
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Konum
+                  </label>
+                  <LocationPicker
+                    initialLocation={currentLocation}
+                    onLocationSelect={handleLocationSelect}
+                  />
                 </div>
               </div>
 
@@ -216,7 +266,7 @@ export default function BarberProfilePage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                   {isLoading ? 'Kaydediliyor...' : 'Kaydet'}
                 </button>
