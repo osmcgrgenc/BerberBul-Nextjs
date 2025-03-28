@@ -1,28 +1,36 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/berber/Navbar";
+import { Toaster } from "react-hot-toast";
+import SessionProvider from "@/components/providers/SessionProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./api/auth/[...nextauth]/route";
-import SessionProvider from "@/components/providers/SessionProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BerberBul - En Yakın Berberi Keşfet",
-  description: "Konumuna en yakın berberleri bul, randevunu hemen oluştur!",
+  title: "BerberBul",
+  description: "Online berber randevu sistemi",
 };
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+  error,
+}: {
   children: React.ReactNode;
-}>) {
+  error: React.ReactNode;
+}) {
   const session = await getServerSession(authOptions);
 
   return (
     <html lang="tr">
       <body className={inter.className}>
-        <SessionProvider session={session}>{children}</SessionProvider>
+        <SessionProvider session={session}>
+          <Navbar />
+          {error || children}
+          <Toaster position="top-right" />
+        </SessionProvider>
       </body>
     </html>
   );
