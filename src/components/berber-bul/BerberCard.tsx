@@ -12,7 +12,7 @@ interface BerberCardProps {
 export default function BerberCard({ berber }: BerberCardProps) {
   return (
     <Link
-      href={`/berber/${berber.id}`}
+      href={`/randevu-al/${berber.id}`}
       className="block bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100"
     >
       <div className="flex items-start justify-between">

@@ -6,9 +6,9 @@ import { usePathname } from 'next/navigation'
 
 const navigation = [
   { name: 'Ana Sayfa', href: '/' },
-  { name: 'Berberler', href: '/berberler' },
+  { name: 'Berberler', href: '/berber-bul' },
   { name: 'Randevularım', href: '/randevularim' },
-  { name: 'Profilim', href: '/profilim' },
+  { name: 'Yorumlarım', href: '/yorumlarim' },
 ]
 
 interface CustomerNavbarProps {
