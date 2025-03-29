@@ -41,6 +41,7 @@ model Barber {
   district      String
   neighborhood  String
   phone         String
+  rating        Float?    // Ortalama puan
   services      Service[]
   appointments  Appointment[]
   workingHours  WorkingHours[]

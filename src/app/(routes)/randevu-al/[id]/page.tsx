@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Barber } from '@/types/berber'
 import BerberInfo from '@/components/berber-detay/BerberInfo'
 import WorkingHours from '@/components/berber-detay/WorkingHours'

@@ -1,11 +1,19 @@
+import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { NextResponse } from 'next/server'
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // params'ı await etmemize gerek yok çünkü artık tip güvenli
+    if (!params.id) {
+      return NextResponse.json(
+        { error: 'Berber ID gerekli' },
+        { status: 400 }
+      )
+    }
+
     const barber = await prisma.barber.findUnique({
       where: {
         id: params.id,
@@ -20,6 +28,7 @@ export async function GET(
         neighborhood: true,
         latitude: true,
         longitude: true,
+        rating: true,
         services: {
           select: {
             id: true,
@@ -67,24 +76,11 @@ export async function GET(
       )
     }
 
-    // Ortalama puanı hesapla
-    const rating =
-      barber.reviews.length > 0
-        ? barber.reviews.reduce(
-            (acc: number, review: { rating: number }) =>
-              acc + review.rating,
-            0
-          ) / barber.reviews.length
-        : null
-
-    return NextResponse.json({
-      ...barber,
-      rating,
-    })
+    return NextResponse.json(barber)
   } catch (error) {
     console.error('Berber bilgileri alınırken hata:', error)
     return NextResponse.json(
-      { error: 'Berber bilgileri alınırken bir hata oluştu' },
+      { error: 'Bir hata oluştu' },
       { status: 500 }
     )
   }
