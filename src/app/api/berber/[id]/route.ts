@@ -3,11 +3,12 @@ import prisma from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    // params'ı await etmemize gerek yok çünkü artık tip güvenli
-    if (!params.id) {
+    const { id } = context.params
+
+    if (!id) {
       return NextResponse.json(
         { error: 'Berber ID gerekli' },
         { status: 400 }
@@ -16,19 +17,9 @@ export async function GET(
 
     const barber = await prisma.barber.findUnique({
       where: {
-        id: params.id,
+        id,
       },
-      select: {
-        id: true,
-        shopName: true,
-        description: true,
-        address: true,
-        city: true,
-        district: true,
-        neighborhood: true,
-        latitude: true,
-        longitude: true,
-        rating: true,
+      include: {
         services: {
           select: {
             id: true,
@@ -76,7 +67,31 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(barber)
+    // Ortalama puanı hesapla
+    const averageRating =
+      barber.reviews.length > 0
+        ? barber.reviews.reduce((acc, review) => acc + review.rating, 0) /
+          barber.reviews.length
+        : null
+
+    // Response nesnesini oluştur
+    const response = {
+      id: barber.id,
+      shopName: barber.shopName,
+      description: barber.description,
+      address: barber.address,
+      city: barber.city,
+      district: barber.district,
+      neighborhood: barber.neighborhood,
+      latitude: barber.latitude,
+      longitude: barber.longitude,
+      rating: averageRating,
+      services: barber.services,
+      workingHours: barber.workingHours,
+      reviews: barber.reviews,
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('Berber bilgileri alınırken hata:', error)
     return NextResponse.json(
