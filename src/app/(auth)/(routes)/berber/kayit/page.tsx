@@ -13,7 +13,7 @@ interface RegisterForm {
   email: string
   password: string
   phone: string
-  businessName: string
+  shopName: string
   address: string
 }
 
@@ -127,11 +127,11 @@ export default function BarberRegisterPage() {
           />
 
           <FormInput
-            id="businessName"
+            id="shopName"
             label="İşletme Adı"
             type="text"
             register={register}
-            error={errors.businessName?.message}
+            error={errors.shopName?.message}
             placeholder="İşletmenizin Adı"
           />
         </div>

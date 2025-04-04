@@ -2,33 +2,9 @@ import { NextResponse } from 'next/server'
 import { hash } from 'bcrypt'
 import prisma from '@/lib/prisma'
 import { getCache } from '@/lib/cache'
-import { Ratelimit } from '@upstash/ratelimit'
-import { Redis } from '@upstash/redis'
-
-// Rate limiting için Redis bağlantısı
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-})
-
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, '1 m'), // 1 dakikada maksimum 5 istek
-})
 
 export async function POST(request: Request) {
   try {
-    // Rate limiting kontrolü
-    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1'
-    const { success } = await ratelimit.limit(ip)
-    
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Çok fazla istek gönderdiniz. Lütfen bir süre bekleyin.' },
-        { status: 429 }
-      )
-    }
-
     const body = await request.json()
     const { email, name, password, role, ...userData } = body
 
@@ -65,15 +41,18 @@ export async function POST(request: Request) {
       // Role göre ilgili profil oluşturma
       if (role === 'BARBER') {
         const { shopName, phone, address, city, district, neighborhood } = userData
+        if (!shopName) {
+          throw new Error('Berber dükkanı adı zorunludur')
+        }
         await tx.barber.create({
           data: {
             userId: user.id,
             shopName,
-            phone,
-            address,
-            city,
-            district,
-            neighborhood,
+            phone: phone || '',
+            address: address || '',
+            city: city || '',
+            district: district || '',
+            neighborhood: neighborhood || '',
             latitude: 0,
             longitude: 0,
           },
@@ -83,7 +62,7 @@ export async function POST(request: Request) {
         await tx.customer.create({
           data: {
             userId: user.id,
-            phone,
+            phone: phone || '',
           },
         })
       }
@@ -95,7 +74,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Kayıt hatası:', error)
     return NextResponse.json(
-      { error: 'Kayıt işlemi sırasında bir hata oluştu' },
+      { error: error instanceof Error ? error.message : 'Kayıt işlemi sırasında bir hata oluştu' },
       { status: 500 }
     )
   }

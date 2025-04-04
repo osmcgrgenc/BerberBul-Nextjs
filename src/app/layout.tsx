@@ -14,12 +14,67 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BerberBul - Online Berber Randevu Sistemi",
-  description: "Konumunuza en yakın berberleri bulun, online randevu alın. Sadece 100₺/ay.",
-  keywords: "berber, randevu, online randevu, berber bul",
-  authors: [{ name: "BerberBul" }],
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: "#1F7A8C"
+  metadataBase: new URL('https://berberbul.com'),
+  title: {
+    default: 'BerberBul - Online Berber Randevu Sistemi',
+    template: '%s | BerberBul'
+  },
+  description: 'BerberBul ile size en yakın berberi bulun, online randevu alın. Profesyonel berberlik hizmetleri için doğru adres.',
+  keywords: ['berber', 'randevu', 'online randevu', 'kuaför', 'saç kesimi', 'tıraş'],
+  authors: [{ name: 'BerberBul' }],
+  creator: 'BerberBul',
+  publisher: 'BerberBul',
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-icon.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'BerberBul',
+    title: 'BerberBul - Online Berber Randevu Sistemi',
+    description: 'Size en yakın berberi bulun, online randevu alın.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'BerberBul',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'BerberBul - Online Berber Randevu Sistemi',
+    description: 'Size en yakın berberi bulun, online randevu alın.',
+    images: ['/twitter-image.png'],
+    creator: '@berberbul',
+  },
+  verification: {
+    google: 'Google Search Console doğrulama kodu',
+    yandex: 'Yandex Webmaster doğrulama kodu',
+  },
+  alternates: {
+    canonical: 'https://berberbul.com',
+    languages: {
+      'tr-TR': 'https://berberbul.com',
+    },
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 interface LayoutProps {

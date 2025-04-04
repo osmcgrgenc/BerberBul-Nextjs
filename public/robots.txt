@@ -1,0 +1,16 @@
+# https://berberbul.com/robots.txt
+# BerberBul robots.txt
+
+User-agent: *
+Allow: /
+Allow: /berber/
+Allow: /musteri/
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+
+# Sitemap
+Sitemap: https://berberbul.com/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 10 

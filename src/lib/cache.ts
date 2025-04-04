@@ -1,6 +1,6 @@
-import { LRUCache } from 'lru-cache'
+import LRUCache from 'lru-cache'
 
-const cache = new LRUCache({
+const cache = new LRUCache<string, unknown>({
   max: 500, // maksimum önbellek boyutu
   ttl: 1000 * 60 * 5, // 5 dakika
 })
