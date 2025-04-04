@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { getCache } from '@/lib/cache'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,73 +10,68 @@ export async function GET(request: NextRequest) {
     const district = searchParams.get('district')
     const rating = searchParams.get('rating')
 
-    // Filtreleme koşullarını oluştur
-    const where: Prisma.BarberWhereInput = {}
+    const cacheKey = `berberler:${city}:${district}:${rating}`
 
-    if (city) {
-      where.city = {
-        equals: city,
-        mode: 'insensitive',
+    return await getCache(cacheKey, async () => {
+      // Filtreleme koşullarını oluştur
+      const where: Prisma.BarberWhereInput = {}
+
+      if (city) {
+        where.city = {
+          equals: city,
+          mode: 'insensitive',
+        }
       }
-    }
 
-    if (district) {
-      where.district = {
-        equals: district,
-        mode: 'insensitive',
+      if (district) {
+        where.district = {
+          equals: district,
+          mode: 'insensitive',
+        }
       }
-    }
 
-    // Berberleri getir
-    const barbers = await prisma.barber.findMany({
-      where,
-      select: {
-        id: true,
-        shopName: true,
-        description: true,
-        address: true,
-        city: true,
-        district: true,
-        neighborhood: true,
-        latitude: true,
-        longitude: true,
-        reviews: {
-          select: {
-            rating: true,
+      // Berberleri getir
+      const barbers = await prisma.barber.findMany({
+        where,
+        select: {
+          id: true,
+          shopName: true,
+          description: true,
+          address: true,
+          city: true,
+          district: true,
+          neighborhood: true,
+          latitude: true,
+          longitude: true,
+          reviews: {
+            select: {
+              rating: true,
+            },
           },
         },
-      },
+      })
+
+      // Ortalama puanları hesapla ve rating filtresini uygula
+      const filteredBarbers = barbers
+        .map(barber => {
+          const avgRating = barber.reviews.length > 0
+            ? barber.reviews.reduce((acc, review) => acc + review.rating, 0) / barber.reviews.length
+            : 0
+
+          return {
+            ...barber,
+            averageRating: avgRating,
+          }
+        })
+        .filter(barber => !rating || barber.averageRating >= Number(rating))
+
+      return NextResponse.json(filteredBarbers)
     })
-
-    // Ortalama puanları hesapla ve rating filtresini uygula
-    const barbersWithRating = barbers.map((barber) => {
-      const totalRating = barber.reviews.reduce(
-        (sum, review) => sum + review.rating,
-        0
-      )
-      const averageRating =
-        barber.reviews.length > 0
-          ? totalRating / barber.reviews.length
-          : null
-
-      const { reviews, ...rest } = barber
-      return {
-        ...rest,
-        rating: averageRating,
-      }
-    })
-
-    // Rating filtresini uygula
-    const filteredBarbers = rating
-      ? barbersWithRating.filter(
-          (barber) =>
-            barber.rating !== null && barber.rating >= Number(rating)
-        )
-      : barbersWithRating
-
-    return NextResponse.json(filteredBarbers)
   } catch (error) {
     console.error('Berberler getirme hatası:', error)
-    return new NextResponse('Internal Server Error', { status: 500 })
+    return NextResponse.json(
+      { error: 'Berberler getirilirken bir hata oluştu' },
+      { status: 500 }
+    )
   }
 } 

@@ -1,16 +1,48 @@
 version: '3.8'
+
 services:
-  postgres:
-    image: postgres:14
-    container_name: berberbul-db
+  postgres-master:
+    image: postgres:15
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: berberbul
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-master-data:/var/lib/postgresql/data
+    command: >
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c wal_level=replica
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+    networks:
+      - berberbul-network
+
+  postgres-replica:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-replica-data:/var/lib/postgresql/data
+    command: >
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c hot_standby=on
+    depends_on:
+      - postgres-master
+    networks:
+      - berberbul-network
 
 volumes:
-  postgres_data: 
+  postgres-master-data:
+  postgres-replica-data:
+
+networks:
+  berberbul-network:
+    driver: bridge 

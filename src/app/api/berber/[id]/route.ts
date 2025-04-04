@@ -1,25 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { getCache } from '@/lib/cache'
+import { monitorApiCall } from '@/lib/monitoring'
+import { getPrismaClient } from '@/lib/db-utils'
 
-export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
-  try {
-    const { id } = context.params
+async function getBarberHandler(request: NextRequest, context: { params: { id: string } }) {
+  const { id } = context.params
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Berber ID gerekli' },
-        { status: 400 }
-      )
-    }
+  if (!id) {
+    return NextResponse.json(
+      { error: 'Berber ID gerekli' },
+      { status: 400 }
+    )
+  }
+
+  const cacheKey = `barber:${id}`
+
+  return await getCache(cacheKey, async () => {
+    // Okuma işlemi olduğu için replica'yı kullan
+    const prisma = getPrismaClient('read')
 
     const barber = await prisma.barber.findUnique({
       where: {
         id,
       },
-      include: {
+      select: {
+        id: true,
+        shopName: true,
+        description: true,
+        address: true,
+        city: true,
+        district: true,
+        neighborhood: true,
+        latitude: true,
+        longitude: true,
+        phone: true,
         services: {
           select: {
             id: true,
@@ -53,6 +67,7 @@ export async function GET(
               },
             },
           },
+          take: 10,
           orderBy: {
             createdAt: 'desc',
           },
@@ -67,35 +82,27 @@ export async function GET(
       )
     }
 
-    // Ortalama puanı hesapla
-    const averageRating =
-      barber.reviews.length > 0
-        ? barber.reviews.reduce((acc, review) => acc + review.rating, 0) /
-          barber.reviews.length
-        : null
+    const averageRating = barber.reviews.length > 0
+      ? barber.reviews.reduce((acc, review) => acc + review.rating, 0) / barber.reviews.length
+      : 0
 
-    // Response nesnesini oluştur
-    const response = {
-      id: barber.id,
-      shopName: barber.shopName,
-      description: barber.description,
-      address: barber.address,
-      city: barber.city,
-      district: barber.district,
-      neighborhood: barber.neighborhood,
-      latitude: barber.latitude,
-      longitude: barber.longitude,
-      rating: averageRating,
-      services: barber.services,
-      workingHours: barber.workingHours,
-      reviews: barber.reviews,
-    }
+    return NextResponse.json({
+      ...barber,
+      averageRating,
+    })
+  })
+}
 
-    return NextResponse.json(response)
+export async function GET(
+  request: NextRequest,
+  context: { params: { id: string } }
+) {
+  try {
+    return await monitorApiCall(request, () => getBarberHandler(request, context))
   } catch (error) {
-    console.error('Berber bilgileri alınırken hata:', error)
+    console.error('Berber getirme hatası:', error)
     return NextResponse.json(
-      { error: 'Bir hata oluştu' },
+      { error: 'Berber bilgileri getirilirken bir hata oluştu' },
       { status: 500 }
     )
   }
