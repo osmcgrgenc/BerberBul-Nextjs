@@ -1,48 +1,99 @@
 'use client'
 
 import Link from 'next/link'
+import ReviewCard from '../ui/ReviewCard'
+import { Check } from 'lucide-react'
+
+const reviews = [
+  {
+    name: 'Berber Ahmet',
+    rating: 4,
+    comment: 'İşlerim gözle görülür şekilde arttı!'
+  },
+  {
+    name: 'Berber Mehmet',
+    rating: 4,
+    comment: 'Platform kullanımı çok kolay'
+  },
+  {
+    name: 'Berber Munun',
+    rating: 5,
+    comment: 'Müşteriler yorumlara önem veriyor'
+  }
+]
+
+const features = [
+  'Sınırsız randevu alımı',
+  'Müşteri yorumları',
+  'Konuma göre listeleme',
+  'Profesyonel berber profili'
+]
 
 export default function CTA() {
   return (
-    <div className="bg-transparent">
-      <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:px-8">
-        <div className="relative isolate overflow-hidden bg-gradient-to-br from-blue-600 to-blue-800 px-6 py-24 text-center shadow-2xl sm:rounded-3xl sm:px-16">
-          <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
-            Hemen Başlayın
-          </h2>
-          <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-blue-100">
-            İster müşteri olun, ister berber. BerberBul ile randevu sistemini
-            dijitalleştirin.
-          </p>
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link
-              href="/musteri/kayit"
-              className="w-full sm:w-auto rounded-xl bg-white/10 backdrop-blur-sm px-10 py-4 text-lg font-semibold text-white shadow-lg hover:bg-white/20 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              Müşteri Olarak Kaydol
-            </Link>
-            <Link
-              href="/berber/kayit"
-              className="w-full sm:w-auto rounded-xl bg-white px-10 py-4 text-lg font-semibold text-blue-600 shadow-lg hover:shadow-xl transition-all duration-200 hover:bg-gray-50"
-            >
-              Berber Olarak Kaydol
-            </Link>
+    <section className="container mx-auto px-4 py-16">
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+          {/* Sol taraf - Grafik ve Yorumlar */}
+          <div className="relative">
+            <div className="bg-gradient-to-br from-teal-50 to-blue-50 rounded-lg p-6">
+              {/* Grafik gösterimi */}
+              <div className="aspect-[4/3] relative bg-white rounded-lg mb-6 p-4">
+                <div className="w-full h-full bg-gradient-to-br from-teal-500/10 to-blue-500/10 rounded-lg flex items-center justify-center">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-teal-600 mb-2">100+</div>
+                    <div className="text-gray-600">Aktif Berber</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Yorumlar */}
+              <div className="space-y-4">
+                {reviews.map((review, index) => (
+                  <ReviewCard key={index} {...review} />
+                ))}
+              </div>
+            </div>
           </div>
-          {/* Background blur */}
-          <div
-            className="absolute -top-24 right-0 -z-10 transform-gpu blur-3xl"
-            aria-hidden="true"
-          >
-            <div
-              className="aspect-[1404/767] w-[87.75rem] bg-gradient-to-tr from-blue-500 to-blue-300 opacity-25"
-              style={{
-                clipPath:
-                  'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)',
-              }}
-            />
+
+          {/* Sağ taraf - Fiyat ve Özellikler */}
+          <div className="flex flex-col justify-between">
+            <div>
+              <div className="flex items-baseline gap-2 mb-4">
+                <h3 className="text-3xl font-bold">Sadece 100₺</h3>
+                <span className="text-gray-600">/ Ay</span>
+              </div>
+              
+              <p className="text-gray-600 mb-8">
+                Tüm özelliklere sınırsız erişim, ek ücret yok!
+              </p>
+
+              <ul className="space-y-4 mb-8">
+                {features.map((feature, index) => (
+                  <li key={index} className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-teal-600" />
+                    </div>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="space-y-4">
+              <Link
+                href="/register"
+                className="block w-full bg-teal-600 text-white text-center px-6 py-3 rounded-lg font-medium hover:bg-teal-700 transition-colors"
+              >
+                Hemen Ücretsiz Başla
+              </Link>
+              <p className="text-sm text-center text-gray-500">
+                14 gün ücretsiz deneme, istediğin zaman iptal et
+              </p>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 } 

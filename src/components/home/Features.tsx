@@ -1,60 +1,55 @@
 'use client'
 
-import { CalendarDays, MapPin, Clock, Star } from 'lucide-react'
+import { MapPin, Calendar, Star } from 'lucide-react'
 
 const features = [
   {
-    name: 'Kolay Randevu',
-    description: 'Birkaç tıkla istediğiniz berbere randevu alın.',
-    icon: CalendarDays,
-  },
-  {
-    name: 'Konum Bazlı Arama',
-    description: 'Size en yakın berberleri kolayca bulun.',
     icon: MapPin,
+    title: 'Müşteri Kazan',
+    description: 'Google da seni bulsun\nYeni müşterilerle tanış.',
+    color: 'from-blue-50 to-blue-100'
   },
   {
-    name: 'Çalışma Saatleri',
-    description: 'Berberlerin müsait olduğu saatleri görün.',
-    icon: Clock,
+    icon: Calendar,
+    title: 'Zaman Kazan',
+    description: 'Takvimini sen seç.\nSıra kamiası yok.',
+    color: 'from-teal-50 to-teal-100'
   },
   {
-    name: 'Müşteri Yorumları',
-    description: 'Diğer müşterilerin deneyimlerini okuyun.',
     icon: Star,
-  },
+    title: 'Rekabette Öne Geç',
+    description: 'Yorumların seni anlatsın\nMahallende öne çık',
+    color: 'from-orange-50 to-orange-100'
+  }
 ]
 
 export default function Features() {
   return (
-    <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:py-40 lg:px-8">
-      <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+    <section className="container mx-auto px-4 py-16">
+      <div className="text-center mb-12">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">
           Neden BerberBul?
         </h2>
-        <p className="mt-6 text-xl leading-8 text-gray-600">
-          BerberBul ile berber randevusu almanın avantajları
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          BerberBul ile işinizi büyütün, müşterilerinizi artırın ve zamanınızı daha iyi yönetin.
         </p>
       </div>
-      <div className="mx-auto mt-16 max-w-7xl px-6 sm:mt-20 md:mt-24 lg:px-8">
-        <dl className="mx-auto grid max-w-2xl grid-cols-1 gap-x-8 gap-y-12 text-base leading-7 text-gray-600 sm:grid-cols-2 lg:mx-0 lg:max-w-none lg:grid-cols-4 lg:gap-x-12 lg:gap-y-16">
-          {features.map((feature) => (
-            <div
-              key={feature.name}
-              className="relative rounded-2xl bg-white p-8 shadow-lg hover:shadow-xl transition-shadow duration-200"
-            >
-              <dt className="flex items-center gap-3 font-semibold text-gray-900 text-lg mb-3">
-                <feature.icon
-                  className="h-8 w-8 text-blue-600"
-                  aria-hidden="true"
-                />
-                {feature.name}
-              </dt>
-              <dd className="text-gray-600">{feature.description}</dd>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        {features.map((feature, index) => (
+          <div 
+            key={index} 
+            className="flex flex-col items-center text-center space-y-4 p-6 rounded-2xl bg-gradient-to-br hover:scale-105 transition-transform duration-300"
+            style={{ background: `linear-gradient(to bottom right, var(--${feature.color}))` }}
+          >
+            <div className="w-16 h-16 rounded-full bg-white shadow-md flex items-center justify-center">
+              <feature.icon className="w-8 h-8 text-teal-600" />
             </div>
-          ))}
-        </dl>
+            <h3 className="text-xl font-semibold text-gray-900">{feature.title}</h3>
+            <p className="text-gray-600 whitespace-pre-line">{feature.description}</p>
+          </div>
+        ))}
       </div>
-    </div>
+    </section>
   )
 } 

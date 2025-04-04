@@ -1,6 +1,7 @@
 import Hero from '@/components/home/Hero'
 import Features from '@/components/home/Features'
 import CTA from '@/components/home/CTA'
+import Contact from '@/components/home/Contact'
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
       <Hero />
       <Features />
       <CTA />
+      <Contact />
     </main>
   )
 }
