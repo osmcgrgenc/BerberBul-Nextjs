@@ -3,6 +3,10 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/components/providers/AuthProvider'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
+import ErrorBoundary from '@/components/error/ErrorBoundary'
+import { Suspense } from 'react'
+import LoadingSpinner from '@/components/loading/LoadingSpinner'
 
 // Font yüklemesini optimize etmek için preload kullanımı
 const inter = Inter({ 
@@ -89,11 +93,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-        <AuthProvider>
-          {children}
-          <Toaster position="bottom-right" />
-        </AuthProvider>
+      <body className="min-h-screen bg-gradient-to-b from-white to-blue-50 dark:from-gray-900 dark:to-gray-800">
+        <ThemeProvider>
+          <AuthProvider>
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingSpinner />}>
+                {children}
+              </Suspense>
+            </ErrorBoundary>
+            <Toaster position="bottom-right" />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
