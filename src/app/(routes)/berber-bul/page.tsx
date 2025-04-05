@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Loader2 } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import BerberCard from '@/components/berber-bul/BerberCard'
-import SearchFilters from '@/components/berber-bul/SearchFilters'
 import { Barber } from '@prisma/client'
+import { withCache, withPerformanceMonitoring } from '@/lib/db-utils'
 
+// Bileşenleri lazy load et
 const BerberMap = dynamic(() => import('@/components/berber-bul/BerberMap'), {
   ssr: false,
   loading: () => (
@@ -15,6 +15,24 @@ const BerberMap = dynamic(() => import('@/components/berber-bul/BerberMap'), {
         <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto" />
         <p className="mt-2 text-sm text-gray-600">Harita yükleniyor...</p>
       </div>
+    </div>
+  ),
+})
+
+const BerberCard = dynamic(() => import('@/components/berber-bul/BerberCard'), {
+  loading: () => (
+    <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 animate-pulse">
+      <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+      <div className="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="mt-4 h-4 bg-gray-200 rounded w-1/4"></div>
+    </div>
+  ),
+})
+
+const SearchFilters = dynamic(() => import('@/components/berber-bul/SearchFilters'), {
+  loading: () => (
+    <div className="bg-white rounded-xl p-4 shadow-sm animate-pulse">
+      <div className="h-10 bg-gray-200 rounded w-full"></div>
     </div>
   ),
 })
@@ -43,15 +61,26 @@ export default function BerberBulPage() {
         if (district) params.append('district', district)
         if (minRating > 0) params.append('minRating', minRating.toString())
 
-        const response = await fetch(`/api/berberler?${params.toString()}`)
-        if (!response.ok) {
-          throw new Error('Berberler yüklenirken bir hata oluştu')
-        }
+        const cacheKey = `berberler-${params.toString()}`
+        
+        const data = await withPerformanceMonitoring(
+          () => withCache(
+            cacheKey,
+            async () => {
+              const response = await fetch(`/api/berberler?${params.toString()}`)
+              if (!response.ok) {
+                throw new Error('Berberler yüklenirken bir hata oluştu')
+              }
+              return response.json()
+            },
+            'shortTerm'
+          ),
+          'fetchBerberler'
+        )
 
-        const data = await response.json()
         setBerberler(data)
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Bir hata oluştu')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Bir hata oluştu')
       } finally {
         setIsLoading(false)
       }
@@ -61,49 +90,42 @@ export default function BerberBulPage() {
   }, [city, district, minRating])
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="space-y-6">
-            <SearchFilters
-              city={city}
-              setCity={setCity}
-              district={district}
-              setDistrict={setDistrict}
-              minRating={minRating}
-              setMinRating={setMinRating}
-            />
-
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Sonuçlar</h2>
-              
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <SearchFilters
+            city={city}
+            district={district}
+            minRating={minRating}
+            onCityChange={setCity}
+            onDistrictChange={setDistrict}
+            onMinRatingChange={setMinRating}
+          />
+          
+          {isLoading ? (
+            <div className="mt-8 space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="mt-2 h-4 bg-gray-200 rounded w-1/2"></div>
+                  <div className="mt-4 h-4 bg-gray-200 rounded w-1/4"></div>
                 </div>
-              ) : error ? (
-                <div className="bg-red-50 text-red-600 p-4 rounded-xl">
-                  {error}
-                </div>
-              ) : berberler.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Arama kriterlerinize uygun berber bulunamadı.</p>
-                  <p className="text-sm text-gray-400 mt-1">Lütfen farklı filtreler deneyin.</p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {berberler.map((berber) => (
-                    <BerberCard key={berber.id} berber={berber} />
-                  ))}
-                </div>
-              )}
+              ))}
             </div>
-          </div>
-
-          <div className="lg:col-span-2 h-[calc(100vh-4rem)] sticky top-16">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 h-full">
-              <BerberMap berberler={berberler} />
+          ) : error ? (
+            <div className="mt-8 text-center text-red-500">{error}</div>
+          ) : (
+            <div className="mt-8 space-y-4">
+              {berberler.map((berber) => (
+                <BerberCard key={berber.id} berber={berber} />
+              ))}
             </div>
+          )}
+        </div>
+        
+        <div className="lg:col-span-1">
+          <div className="sticky top-4 h-[600px]">
+            <BerberMap berberler={berberler} />
           </div>
         </div>
       </div>

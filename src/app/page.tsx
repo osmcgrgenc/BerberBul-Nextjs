@@ -1,7 +1,20 @@
-import Hero from '@/components/home/Hero'
-import Features from '@/components/home/Features'
-import CTA from '@/components/home/CTA'
-import Contact from '@/components/home/Contact'
+import dynamic from 'next/dynamic'
+
+const Hero = dynamic(() => import('@/components/home/Hero'), {
+  loading: () => <div className="h-[600px] bg-gray-100 animate-pulse" />
+})
+
+const Features = dynamic(() => import('@/components/home/Features'), {
+  loading: () => <div className="h-[400px] bg-gray-100 animate-pulse" />
+})
+
+const CTA = dynamic(() => import('@/components/home/CTA'), {
+  loading: () => <div className="h-[300px] bg-gray-100 animate-pulse" />
+})
+
+const Contact = dynamic(() => import('@/components/home/Contact'), {
+  loading: () => <div className="h-[400px] bg-gray-100 animate-pulse" />
+})
 
 export default function Home() {
   return (

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/navbar/Navbar";
-import { getServerSession } from "next-auth";
-import { authOptions } from "./api/auth/[...nextauth]/route";
-import Providers from "@/components/providers/Providers";
+import { Toaster } from 'react-hot-toast'
+import { AuthProvider } from '@/components/providers/AuthProvider'
 
 // Font yüklemesini optimize etmek için preload kullanımı
 const inter = Inter({ 
@@ -15,11 +13,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://berberbul.com'),
-  title: {
-    default: 'BerberBul - Online Berber Randevu Sistemi',
-    template: '%s | BerberBul'
-  },
-  description: 'BerberBul ile size en yakın berberi bulun, online randevu alın. Profesyonel berberlik hizmetleri için doğru adres.',
+  title: 'BerberBul - Berber Randevu Sistemi',
+  description: 'Size en yakın berberi bulun, kolayca randevu alın',
   keywords: ['berber', 'randevu', 'online randevu', 'kuaför', 'saç kesimi', 'tıraş'],
   authors: [{ name: 'BerberBul' }],
   creator: 'BerberBul',
@@ -83,9 +78,11 @@ interface LayoutProps {
 }
 
 // Layout bileşenini Single Responsibility Principle'a uygun olarak ayırıyoruz
-export default async function RootLayout({ children, error }: LayoutProps) {
-  const session = await getServerSession(authOptions);
-
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="tr" className={inter.className}>
       <head>
@@ -93,12 +90,10 @@ export default async function RootLayout({ children, error }: LayoutProps) {
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body className="min-h-screen bg-gradient-to-b from-white to-blue-50">
-        <Providers session={session}>
-          <Navbar />
-          <div className="container mx-auto px-4">
-            {error || children}
-          </div>
-        </Providers>
+        <AuthProvider>
+          {children}
+          <Toaster position="bottom-right" />
+        </AuthProvider>
       </body>
     </html>
   );
