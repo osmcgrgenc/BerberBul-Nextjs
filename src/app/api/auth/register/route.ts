@@ -1,80 +1,96 @@
 import { NextResponse } from 'next/server'
-import { hash } from 'bcrypt'
-import prisma from '@/lib/prisma'
-import { getCache } from '@/lib/cache'
+import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json()
-    const { email, name, password, role, ...userData } = body
+    const { name, email, password, role } = await req.json()
 
-    // E-posta kontrolü için önbellek kullanımı
-    const existingUser = await getCache(`user:${email}`, async () => {
-      return await prisma.user.findUnique({
-        where: { email },
-        select: { id: true }
-      })
-    })
-
-    if (existingUser) {
+    // Gerekli alanların kontrolü
+    if (!name || !email || !password || !role) {
       return NextResponse.json(
-        { error: 'Bu e-posta adresi zaten kullanımda' },
+        { message: 'Tüm alanlar zorunludur' },
         { status: 400 }
       )
     }
 
-    // Transaction kullanarak atomik işlem
-    const result = await prisma.$transaction(async (tx) => {
-      // Şifre hashleme
-      const hashedPassword = await hash(password, 12)
+    // Email formatı kontrolü
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: 'Geçersiz email formatı' },
+        { status: 400 }
+      )
+    }
 
-      // Kullanıcı oluşturma
-      const user = await tx.user.create({
-        data: {
-          email,
-          name,
-          password: hashedPassword,
-          role,
-        },
-      })
+    // Şifre uzunluğu kontrolü
+    if (password.length < 6) {
+      return NextResponse.json(
+        { message: 'Şifre en az 6 karakter olmalıdır' },
+        { status: 400 }
+      )
+    }
 
-      // Role göre ilgili profil oluşturma
-      if (role === 'BARBER') {
-        const { shopName, phone, address, city, district, neighborhood } = userData
-        if (!shopName) {
-          throw new Error('Berber dükkanı adı zorunludur')
-        }
-        await tx.barber.create({
-          data: {
-            userId: user.id,
-            shopName,
-            phone: phone || '',
-            address: address || '',
-            city: city || '',
-            district: district || '',
-            neighborhood: neighborhood || '',
-            latitude: 0,
-            longitude: 0,
-          },
-        })
-      } else if (role === 'CUSTOMER') {
-        const { phone } = userData
-        await tx.customer.create({
-          data: {
-            userId: user.id,
-            phone: phone || '',
-          },
-        })
-      }
+    // Rol kontrolü
+    if (!['musteri', 'berber'].includes(role)) {
+      return NextResponse.json(
+        { message: 'Geçersiz rol' },
+        { status: 400 }
+      )
+    }
 
-      return user
+    // Email kontrolü
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
     })
 
-    return NextResponse.json(result, { status: 201 })
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'Bu email adresi zaten kullanılıyor' },
+        { status: 400 }
+      )
+    }
+
+    // Şifreyi hashle
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    // Kullanıcıyı oluştur
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role,
+      },
+    })
+
+    // Rol bazlı ek bilgileri oluştur
+    if (role === 'berber') {
+      await prisma.berber.create({
+        data: {
+          userId: user.id,
+          adres: '',
+          telefon: '',
+          calismaSaatleri: {},
+          hizmetler: {},
+        },
+      })
+    } else if (role === 'musteri') {
+      await prisma.musteri.create({
+        data: {
+          userId: user.id,
+        },
+      })
+    }
+
+    return NextResponse.json(
+      { message: 'Kullanıcı başarıyla oluşturuldu' },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Kayıt hatası:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Kayıt işlemi sırasında bir hata oluştu' },
+      { message: 'Bir hata oluştu' },
       { status: 500 }
     )
   }

@@ -15,48 +15,49 @@ datasource db {
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String
   email         String    @unique
   password      String
-  role          Role      @default(CUSTOMER)
+  role          String    // 'admin', 'berber', 'musteri'
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
-  // Berber ile ilişkili alanlar
-  barber        Barber?
-  // Müşteri ile ilişkili alanlar
-  customer      Customer?
+  berber        Berber?
+  musteri       Musteri?
 }
 
-model Barber {
+model Berber {
   id            String    @id @default(cuid())
   userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  shopName      String
-  description   String?
-  address       String
-  latitude      Float
-  longitude     Float
-  city          String
-  district      String
-  neighborhood  String
-  phone         String
-  rating        Float?    // Ortalama puan
-  services      Service[]
-  appointments  Appointment[]
-  workingHours  WorkingHours[]
-  reviews       Review[]
+  user          User      @relation(fields: [userId], references: [id])
+  adres         String
+  telefon       String
+  calismaSaatleri Json
+  hizmetler     Json
+  randevular    Randevu[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
 
-model Customer {
+model Musteri {
   id            String    @id @default(cuid())
   userId        String    @unique
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  phone         String?
-  appointments  Appointment[]
-  reviews       Review[]
+  user          User      @relation(fields: [userId], references: [id])
+  telefon       String?
+  randevular    Randevu[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Randevu {
+  id            String    @id @default(cuid())
+  berberId      String
+  musteriId     String
+  tarih         DateTime
+  saat          String
+  hizmet        String
+  durum         String    // 'beklemede', 'onaylandi', 'iptal', 'tamamlandi'
+  berber        Berber    @relation(fields: [berberId], references: [id])
+  musteri       Musteri   @relation(fields: [musteriId], references: [id])
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }

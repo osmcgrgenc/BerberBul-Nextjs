@@ -1,28 +1,22 @@
-import { NextAuthOptions } from 'next-auth'
+import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import prisma from '@/lib/prisma'
-import { compare } from 'bcrypt'
-import NextAuth from 'next-auth/next'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import { prisma } from '@/lib/prisma'
+import bcrypt from 'bcryptjs'
 
-export const authOptions: NextAuthOptions = {
-  session: {
-    strategy: 'jwt',
-  },
-  pages: {
-    signIn: '/giris',
-    error: '/giris',
-  },
+const handler = NextAuth({
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Şifre', type: 'password' },
-        role: { label: 'Role', type: 'text' },
+        role: { label: 'Rol', type: 'text' }
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('E-posta ve şifre gereklidir')
+          throw new Error('Email ve şifre gereklidir')
         }
 
         const user = await prisma.user.findUnique({
@@ -35,14 +29,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Kullanıcı bulunamadı')
         }
 
-        if (credentials.role && user.role !== credentials.role) {
-          throw new Error('Bu giriş sayfasını kullanamazsınız')
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password)
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        )
 
         if (!isPasswordValid) {
           throw new Error('Geçersiz şifre')
+        }
+
+        if (user.role !== credentials.role) {
+          throw new Error('Geçersiz rol')
         }
 
         return {
@@ -55,26 +52,27 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-      if (trigger === 'update' && session) {
-        return { ...token, ...session.user }
-      }
-      
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id
         token.role = user.role
       }
       return token
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
+      if (session?.user) {
+        session.user.role = token.role
       }
       return session
     },
   },
-}
+  pages: {
+    signIn: '/genel/giris',
+    signUp: '/genel/kayit',
+    error: '/genel/hata',
+  },
+  session: {
+    strategy: 'jwt',
+  },
+})
 
-const handler = NextAuth(authOptions)
 export { handler as GET, handler as POST } 
