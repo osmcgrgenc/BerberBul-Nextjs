@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { rateLimit } from '@/middleware/rate-limit'
 
 const handler = NextAuth({
   providers: [
@@ -12,7 +13,13 @@ const handler = NextAuth({
         password: { label: 'Şifre', type: 'password' },
         role: { label: 'Rol', type: 'text' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
+        // Rate limiting kontrolü
+        const rateLimitResponse = await rateLimit(req as Request)
+        if (rateLimitResponse instanceof Response) {
+          throw new Error(await rateLimitResponse.text())
+        }
+
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Email ve şifre gereklidir')
         }

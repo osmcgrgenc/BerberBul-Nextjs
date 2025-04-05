@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
+import { csrfProtection } from './middleware/csrf'
 
 // Korumalı rotalar
 const protectedRoutes = {
@@ -10,6 +11,12 @@ const protectedRoutes = {
 }
 
 export async function middleware(request: NextRequest) {
+  // CSRF koruması
+  const csrfResponse = await csrfProtection(request)
+  if (csrfResponse instanceof NextResponse) {
+    return csrfResponse
+  }
+
   const token = await getToken({ req: request })
   const { pathname } = request.nextUrl
 
@@ -59,5 +66,6 @@ export const config = {
     '/musteri/:path*',
     '/admin/:path*',
     '/genel/:path*',
+    '/api/:path*',
   ],
 } 

@@ -3,49 +3,44 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { registerSchema, RegisterInput } from '@/lib/validations/auth'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 export default function KayitPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterInput>({
+    resolver: zodResolver(registerSchema),
+  })
+
+  const onSubmit = async (data: RegisterInput) => {
     setError('')
     setLoading(true)
 
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get('name') as string
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const role = formData.get('role') as string
-
     try {
-      const res = await fetch('/api/auth/register', {
+      const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          role,
-        }),
+        body: JSON.stringify(data),
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.message || 'Kayıt işlemi başarısız')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Kayıt işlemi başarısız oldu')
       }
 
       router.push('/genel/giris')
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message)
-      } else {
-        setError('Bir hata oluştu')
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Bir hata oluştu')
     } finally {
       setLoading(false)
     }
@@ -59,7 +54,7 @@ export default function KayitPage() {
             Yeni hesap oluşturun
           </h2>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
               {error}
@@ -68,16 +63,18 @@ export default function KayitPage() {
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="name" className="sr-only">
-                Ad Soyad
+                İsim
               </label>
               <input
                 id="name"
-                name="name"
                 type="text"
-                required
+                {...register('name')}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Ad Soyad"
+                placeholder="İsim"
               />
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+              )}
             </div>
             <div>
               <label htmlFor="email" className="sr-only">
@@ -85,12 +82,14 @@ export default function KayitPage() {
               </label>
               <input
                 id="email"
-                name="email"
                 type="email"
-                required
+                {...register('email')}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Email adresi"
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
             <div>
               <label htmlFor="password" className="sr-only">
@@ -98,12 +97,16 @@ export default function KayitPage() {
               </label>
               <input
                 id="password"
-                name="password"
                 type="password"
-                required
+                {...register('password')}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Şifre"
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
             <div>
               <label htmlFor="role" className="sr-only">
@@ -111,14 +114,16 @@ export default function KayitPage() {
               </label>
               <select
                 id="role"
-                name="role"
-                required
+                {...register('role')}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
               >
                 <option value="">Rol seçin</option>
                 <option value="musteri">Müşteri</option>
                 <option value="berber">Berber</option>
               </select>
+              {errors.role && (
+                <p className="mt-1 text-sm text-red-600">{errors.role.message}</p>
+              )}
             </div>
           </div>
 

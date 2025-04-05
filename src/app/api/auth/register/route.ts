@@ -1,47 +1,23 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { registerSchema } from '@/lib/validations/auth'
+import { rateLimit } from '@/middleware/rate-limit'
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, role } = await req.json()
-
-    // Gerekli alanların kontrolü
-    if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { message: 'Tüm alanlar zorunludur' },
-        { status: 400 }
-      )
+    // Rate limiting kontrolü
+    const rateLimitResponse = await rateLimit(req)
+    if (rateLimitResponse instanceof Response) {
+      return rateLimitResponse
     }
 
-    // Email formatı kontrolü
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: 'Geçersiz email formatı' },
-        { status: 400 }
-      )
-    }
-
-    // Şifre uzunluğu kontrolü
-    if (password.length < 6) {
-      return NextResponse.json(
-        { message: 'Şifre en az 6 karakter olmalıdır' },
-        { status: 400 }
-      )
-    }
-
-    // Rol kontrolü
-    if (!['musteri', 'berber'].includes(role)) {
-      return NextResponse.json(
-        { message: 'Geçersiz rol' },
-        { status: 400 }
-      )
-    }
+    const body = await req.json()
+    const validatedData = registerSchema.parse(body)
 
     // Email kontrolü
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: validatedData.email },
     })
 
     if (existingUser) {
@@ -52,20 +28,23 @@ export async function POST(req: Request) {
     }
 
     // Şifreyi hashle
-    const hashedPassword = await bcrypt.hash(password, 10)
+    const hashedPassword = await bcrypt.hash(validatedData.password, 10)
 
     // Kullanıcıyı oluştur
     const user = await prisma.user.create({
       data: {
-        name,
-        email,
+        name: validatedData.name,
+        email: validatedData.email,
         password: hashedPassword,
-        role,
+        role: validatedData.role,
       },
     })
 
+    // Hassas bilgileri çıkar
+    const { password, ...userWithoutPassword } = user
+
     // Rol bazlı ek bilgileri oluştur
-    if (role === 'berber') {
+    if (validatedData.role === 'berber') {
       await prisma.berber.create({
         data: {
           userId: user.id,
